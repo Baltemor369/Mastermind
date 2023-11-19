@@ -5,7 +5,7 @@ class Mastermind:
 
     def __init__(self, guess_try:int=10) -> None:
         self.secret_code:list[str] = []     # code à deviner
-        self.guest_code:list[str] = []      # code essayer
+        self.guest_code:list[str] = [0,0,0,0]      # code essayer
         self.guess_try:int = guess_try      # nombre d'essaies restant
         self.mem_guess_try = guess_try      # utile pour le reset
         self.index = 0                      # index d'affection color
@@ -31,14 +31,10 @@ class Mastermind:
         
         return (self.right_place,self.wrong_place)
     
-    def generate_code(self) -> str:
-        code:list = []
-        
+    def generate_code(self):
         for i in range(4):
-            code.append(rd.choice(COLORS))
+            self.secret_code.append(rd.choice(COLORS))
         
-        return code
-    
     def reset(self):
         self.guess_try += self.mem_guess_try
         self.secret_code = ""
