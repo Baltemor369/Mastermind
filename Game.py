@@ -5,7 +5,7 @@ class Mastermind:
 
     def __init__(self, guess_try:int=10) -> None:
         self.secret_code:list[str] = []     # code à deviner
-        self.guest_code:list[str] = [0,0,0,0]      # code essayer
+        self.guesser_code:list[str] = [0,0,0,0]      # code essayer
         self.guess_try:int = guess_try      # nombre d'essaies restant
         self.mem_guess_try = guess_try      # utile pour le reset
         self.index = 0                      # index d'affection color
@@ -14,7 +14,7 @@ class Mastermind:
     
     def check_code(self):
         secret_code = self.secret_code.copy()
-        try_code = self.guest_code.copy()
+        try_code = self.guesser_code.copy()
 
         self.right_place = 0
         self.wrong_place = 0
@@ -35,16 +35,27 @@ class Mastermind:
         for i in range(4):
             self.secret_code.append(rd.choice(COLORS))
         
-    def reset(self):
+    def reset_light(self):
+        self.guesser_code = [0,0,0,0]
+        self.right_place = 0
+        self.wrong_place = 0
+
+    def reset_all(self):
         self.guess_try += self.mem_guess_try
         self.secret_code = ""
-        self.guest_code = ""
+        self.guesser_code = ""
         self.right_place = 0
         self.wrong_place = 0
     
     def set_index(self, index:int):
         self.index = index
+    
+    def is_full(self)->bool:
+        for e in self.guesser_code:
+            if e ==0:
+                return False
+        return True
 
     def add_color(self, color:str, index:int):
-        self.guest_code[index] = color
+        self.guesser_code[index] = color
         self.index = (index + 1) % 4
