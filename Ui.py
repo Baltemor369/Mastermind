@@ -10,11 +10,14 @@ class Ui(tk.Tk):
         self.resizable(False,False)
         self.canva = None
         self.tries = tries
+        self.bind("<KeyPress-g>", self.end_game)
+        self.button_activable = True
 
     def menu(self):
         pass
 
     def init_data(self):
+        self.button_activable = True
         self.game = Mastermind(self.tries)
         self.game.generate_code()
         self.start_row = SQUARE_SIZE
@@ -22,20 +25,13 @@ class Ui(tk.Tk):
         self.current_delta_row = 0
         self.current_delta_col = 0
         
-    def Game_tab(self, e=None):
-        print("start")
-        
+    def Game_tab(self, e=None):        
         self.init_data()
-
         
-        if self.canva is None:
-            print("New canva")
-            # create a canva to draw colored square for the game
+        if self.canva is None:            # create a canva to draw colored square for the game
             self.canva = tk.Canvas(self, width=W_WIDTH, height=W_HEIGHT, bg="#999999")
             self.canva.pack()
-        else:
-            print("erase the canva")
-            # delete all on the canva
+        else:            # delete all on the canva
             self.canva.delete("all")
         
         # draw color choice buttons
@@ -122,44 +118,54 @@ class Ui(tk.Tk):
 
         @param color: The selected color.
         """
-        # Calculate the coordinates for drawing the color square
-        x = self.start_col + self.current_delta_col * SQUARE_SIZE
-        y = self.start_row + self.current_delta_row * SQUARE_SIZE
-        
-        # Draw the color square on the canvas
-        square = self.create_square(self.canva, color, x, y, SQUARE_SIZE, "white")
+        if self.button_activable:
+            # Calculate the coordinates for drawing the color square
+            x = self.start_col + self.current_delta_col * SQUARE_SIZE
+            y = self.start_row + self.current_delta_row * SQUARE_SIZE
+            
+            # Draw the color square on the canvas
+            square = self.create_square(self.canva, color, x, y, SQUARE_SIZE, "white")
 
-        # Bind a click event to the color square
-        self.canva.tag_bind(square, '<Button-1>', lambda evt, i=self.game.index, _y=y: self.click_select_index(i, _y))
-        
-        # Update the value of current_delta_col
-        self.current_delta_col =  (self.current_delta_col + 1) % 4
+            # Bind a click event to the color square
+            self.canva.tag_bind(square, '<Button-1>', lambda evt, i=self.game.index, _y=y: self.click_select_index(i, _y))
+            
+            # Update the value of current_delta_col
+            self.current_delta_col =  (self.current_delta_col + 1) % 4
 
-        # Add the selected color to the game guesser code
-        self.game.add_color(color, self.game.index)
+            # Add the selected color to the game guesser code
+            self.game.add_color(color, self.game.index)
 
     
     def click_select_index(self, index:int, _y:int):
-        if _y == self.start_row + self.current_delta_row * SQUARE_SIZE:
-            self.current_delta_col = index
-            self.game.index = index
+        if self.button_activable:
+            if _y == self.start_row + self.current_delta_row * SQUARE_SIZE:
+                self.current_delta_col = index
+                self.game.index = index
     
     def testing_code(self, evt=None):
-        if self.game.is_full():
+        if self.button_activable and self.game.is_full():
             # verify the code
             result = self.game.check_code()
-            # display the return
-            # button with text
-            button1 = self.create_button(self.canva, result[1], self.start_col - SQUARE_SIZE, self.start_row + SQUARE_SIZE * self.current_delta_row,SQUARE_SIZE, SQUARE_SIZE, bg_color="white")
-            button2 = self.create_button(self.canva, result[0], self.start_col + 4*SQUARE_SIZE, self.start_row + SQUARE_SIZE * self.current_delta_row,SQUARE_SIZE, SQUARE_SIZE, bg_color="red")
-            # change row
-            self.current_delta_row += 1
-            self.game.reset_light()
-            # check how many try left
-            if self.game.guess_try == 0:
-                # draw the secret code
-                for j in range(4):
-                    self.create_square(self.canva, self.game.secret_code[j], self.start_col + SQUARE_SIZE * j, self.start_row + SQUARE_SIZE*(self.game.mem_guess_try+1), SQUARE_SIZE)
+            if result[0] == 4 or self.game.guess_try == 0:
                 # draw a message "Win" or "Loose"
-                # end the game (reset after presing a key)
-                self.bind("<KeyPress>",self.Game_tab)
+                if result[0] == 4:
+                    txt = "win"
+                else:
+                    txt = "Loose"
+                self.create_button(self.canva, txt, self.start_col, self.start_row + SQUARE_SIZE*(self.game.mem_guess_try+2), 70, 50)
+                self.end_game()
+            else:
+                # display the return : button with text without command
+                button1 = self.create_button(self.canva, result[1], self.start_col - SQUARE_SIZE, self.start_row + SQUARE_SIZE * self.current_delta_row,SQUARE_SIZE, SQUARE_SIZE, bg_color="white")
+                button2 = self.create_button(self.canva, result[0], self.start_col + 4*SQUARE_SIZE, self.start_row + SQUARE_SIZE * self.current_delta_row,SQUARE_SIZE, SQUARE_SIZE, bg_color="red")
+                # change row
+                self.current_delta_row += 1
+                self.game.reset_light()
+    
+    def end_game(self, evt=None):
+        self.button_activable = False
+        # draw the secret code
+        for j in range(4):
+            self.create_square(self.canva, self.game.secret_code[j], self.start_col + SQUARE_SIZE * j, self.start_row + SQUARE_SIZE*(self.game.mem_guess_try+1), SQUARE_SIZE)
+        # end the game (reset after presing a key)
+        self.bind("<KeyPress-r>",self.Game_tab)
